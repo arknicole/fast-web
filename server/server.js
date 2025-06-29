@@ -32,7 +32,7 @@ const db = mysql.createPool({
   queueLimit: 0
 }).promise();
 
-console.log('✅ MySQL Connection Pool created and ready.');
+console.log('✅ MySQL Connection Pool created and ready for Railway.');
 
 // Multer setup
 const storage = multer.diskStorage({
