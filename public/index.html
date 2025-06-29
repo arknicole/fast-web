@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FAST Aviation Academy, Inc., Bacolod City</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="animation-layer"></div>
+  <header class="hero">
+    <img src="fast-new-logo-type-b.png" alt="FAST Aviation Academy Logo" />
+    <div>
+      <h1>FAST Aviation Academy | Bacolod City</h1>
+      
+    </div>
+  </header>
+
+  <nav aria-label="Main navigation">
+    <ul>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#news">News</a></li>
+      <li><a href="#appointment">Appointment</a></li>
+      <li><a href="admin-login.html" class="admin-link" style="display: none;">Admin Login</a></li>
+    </ul>
+  </nav>
+
+  <section id="gallery">
+    <h2>FLY FAST</h2>
+
+    <div class="swiper">
+      <div class="swiper-wrapper" id="live-gallery-wrapper">
+        </div>
+      
+      <div class="swiper-pagination"></div>
+
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+    </div>
+  </section>
+
+  <section id="about">
+    <h2>About FAST Aviation Academy</h2>
+    <div id="about-content-container">
+      <p>Loading...</p>
+    </div>
+    <p>
+      Location: AVPefianco Building (beside countrymart), Highway Mandalagan, Lacson street, Bacolod City, Philippines
+    </p>
+  </section>
+
+  <section id="news">
+    <h2>📢 School News / Announcements</h2>
+    <div class="swiper-news">
+      <div class="swiper-wrapper" id="news-container-wrapper">
+        </div>
+      <div class="swiper-pagination-news"></div>
+      <div class="swiper-button-prev-news"></div>
+      <div class="swiper-button-next-news"></div>
+    </div>
+  </section>
+
+  <section id="appointment">
+    <h2>Online Appointment / Reservation</h2>
+    <form id="appointmentForm">
+      <input type="text" id="fullname" name="fullname" placeholder="Full Name" required autocomplete="name" />
+      
+      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email" />
+
+      <input type="text" id="contact" name="contact" placeholder="Contact Number" required autocomplete="tel" />
+      
+      <select id="program" name="program" required>
+        <option value="AMT">Aircraft Maintenance Technology (AMT)</option>
+        <option value="AVT">Aviation Electronics Technology (AVT)</option>
+      </select>
+      <input type="date" id="appt_date" name="appt_date" required />
+      <select id="appt_time" name="appt_time" required>
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+      <button type="submit">Submit Appointment</button>
+    </form>
+    <p id="formStatus"></p>
+  </section>
+
+  <footer>
+  <div class="footer-container">
+    <div class="footer-contact">
+      <h3>Contact Us</h3>
+      <p><i class="fas fa-map-marker-alt"></i> AVPefianco Building, Mandalagan, Bacolod City</p>
+      <p><i class="fas fa-phone"></i> 034-707-0941 | 0917 321 8449 | 0998 546 8449</p>
+      <p><i class="fas fa-envelope"></i> fastacademy_bacolod@flyfast.com</p>
+    </div>
+    <div class="footer-social">
+      <h3>Follow Us</h3>
+      <a href="https://www.facebook.com/fastaviationacademy" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+      
+    </div>
+  </div>
+  <div class="footer-copyright">
+    <p>© 2025 FAST Aviation Academy, Inc., Bacolod City</p>
+  </div>
+</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>

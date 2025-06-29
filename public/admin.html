@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel | FAST Aviation Academy</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>FAST Aviation Academy Admin Panel</h1>
+    <button id="logoutBtn">Logout</button>
+  </header>
+
+  <section>
+    <h2>📅 Manage Appointments</h2>
+    <table border="1" width="100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Contact</th>
+          <th>Program</th>
+          <th>Preferred Date</th>
+          <th>Preferred Time</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="appointmentTableBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>📝 Manage "About" Section</h2>
+    <form id="aboutForm">
+      <textarea id="aboutContent" rows="15" style="width: 98%; font-family: monospace;" required></textarea>
+      <br>
+      <button type="submit">Save About Content</button>
+    </form>
+    <p id="aboutStatus"></p>
+  </section>
+
+  <section>
+    <h2>📰 Manage News / Announcements</h2>
+    <form id="newsForm" enctype="multipart/form-data">
+      <input type="text" id="newsTitle" name="title" placeholder="Title" required />
+      <textarea id="newsContent" name="content" placeholder="Content" ></textarea>
+      <input type="file" id="newsImage" name="image" accept="image/*" />
+      <button type="submit">Add News</button>
+    </form>
+    <div id="newsList"></div>
+  </section>
+
+  <section>
+    <h2>📸 Manage Gallery</h2>
+    <form id="photoUploadForm" enctype="multipart/form-data">
+      <input type="file" name="photos" accept="image/*" required multiple />
+      <input type="text" name="caption" id="photoCaption" placeholder="Photo caption for all photos (optional)" />
+      <button type="submit">Upload Photos</button>
+    </form>
+    <p id="photoUploadStatus"></p>
+    <div id="admin-gallery"></div>
+  </section>
+
+  <section>
+    <h2>👨‍💼 Administrator Accounts</h2>
+    <table border="1" width="100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Last Login</th>
+        </tr>
+      </thead>
+      <tbody id="adminListTableBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>👤 Add New Admin User</h2>
+    <form id="adminUserForm">
+      <input type="text" id="newUsername" name="username" placeholder="New Admin Username" required />
+      <input type="password" id="addAdminPassword" name="password" placeholder="New Admin Password" required />
+      <button type="submit">Create Admin</button>
+    </form>
+    <p id="adminUserStatus"></p>
+  </section>
+
+  <section>
+    <h2>🔑 Change Your Password</h2>
+    <form id="changePasswordForm">
+      <input type="password" id="oldPassword" placeholder="Current Password" required autocomplete="current-password" />
+      <input type="password" id="newPassword" placeholder="New Password" required autocomplete="new-password" />
+      <button type="submit">Update Password</button>
+    </form>
+    <p id="changePasswordStatus"></p>
+  </section>
+
+  <script>
+    // --- AUTH CHECK & LOGOUT ---
+    document.getElementById('logoutBtn').addEventListener('click', function() {
+      fetch('/api/admin-logout', { method: 'POST' })
+        .then(() => {
+          window.location.href = 'admin-login.html';
+        });
+    });
+
+    // --- APPOINTMENTS ---
+    function loadAppointments() {
+      fetch('/api/appointments')
+        .then(res => {
+          if (res.status === 401) window.location.href = 'admin-login.html';
+          return res.json();
+        })
+        .then(data => {
+          const tbody = document.getElementById('appointmentTableBody');
+          tbody.innerHTML = '';
+          data.forEach(apt => {
+            const row = document.createElement('tr');
+            row.className = `status-row-${apt.status.toLowerCase()}`;
+            const formattedDate = new Date(apt.appt_date).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+            row.innerHTML = `
+              <td data-label="ID">${apt.id}</td>
+              <td data-label="Full Name">${apt.fullname}</td>
+              <td data-label="Email">${apt.email}</td>
+              <td data-label="Contact">${apt.contact}</td>
+              <td data-label="Program">${apt.program}</td>
+              <td data-label="Date">${formattedDate}</td>
+              <td data-label="Time">${apt.appt_time}</td>
+              <td data-label="Status">
+                <span class="status-indicator status-${apt.status.toLowerCase()}">${apt.status}</span>
+              </td>
+              <td data-label="Actions">
+                <select class="action-dropdown" onchange="updateStatus(${apt.id}, this.value)">
+                  <option value="Pending" ${apt.status === 'Pending' ? 'selected' : ''}>Set Pending</option>
+                  <option value="Completed" ${apt.status === 'Completed' ? 'selected' : ''}>Set Completed</option>
+                  <option value="Cancelled" ${apt.status === 'Cancelled' ? 'selected' : ''}>Set Cancelled</option>
+                </select>
+                <button onclick="deleteAppointment(${apt.id})">Delete</button>
+              </td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+    }
+    
+    function updateStatus(id, newStatus) {
+      fetch(`/api/appointment-status/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      .then(res => res.json())
+      .then(result => {
+        loadAppointments();
+      });
+    }
+
+    function deleteAppointment(id) {
+      if (confirm("Delete this appointment?")) {
+        fetch(`/api/appointment-delete/${id}`, { method: 'DELETE' })
+          .then(() => loadAppointments());
+      }
+    }
+    
+    // --- ABOUT SECTION ---
+    function loadAboutContent() {
+      fetch('/api/about')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('aboutContent').value = data.content;
+        });
+    }
+
+    document.getElementById('aboutForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const content = document.getElementById('aboutContent').value;
+      fetch('/api/about', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      })
+      .then(res => res.json())
+      .then(result => {
+        document.getElementById('aboutStatus').innerText = result.message;
+      });
+    });
+
+    // --- NEWS ---
+    function loadNews() {
+      fetch('/api/news')
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('newsList');
+          list.innerHTML = '';
+          data.forEach(news => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+              <hr>
+              <h3>${news.title}</h3>
+              <p>${news.content}</p>
+              ${news.image ? `<img src="${news.image}" width="200" alt="News Image">` : ''}
+              <br><br>
+              <button onclick="deleteNews(${news.id})">Delete</button>
+            `;
+            list.appendChild(div);
+          });
+        });
+    }
+
+    document.getElementById('newsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch('/api/news', {
+        method: 'POST',
+        body: formData
+      }).then(() => {
+        loadNews();
+        this.reset();
+      });
+    });
+
+    function deleteNews(id) {
+      if (confirm("Delete this news item?")) {
+        fetch(`/api/news/${id}`, { method: 'DELETE' }).then(() => loadNews());
+      }
+    }
+
+    // --- GALLERY ---
+    document.getElementById('photoUploadForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      fetch('/api/gallery-upload', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(result => {
+        document.getElementById('photoUploadStatus').innerText = result.message;
+        loadGallery();
+        this.reset();
+      });
+    });
+
+    function loadGallery() {
+      fetch('/api/gallery')
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById('admin-gallery');
+          container.innerHTML = '';
+          data.forEach(photo => {
+            const div = document.createElement('div');
+            div.style = 'display: inline-block; margin: 10px; text-align: center;';
+            div.innerHTML = `
+              <img src="${photo.path}" alt="Gallery photo" style="max-width:200px; display: block;">
+              <p>${photo.caption || 'No caption'}</p>
+              <button onclick="deleteGalleryPhoto(${photo.id})">Delete</button>
+            `;
+            container.appendChild(div);
+          });
+        });
+    }
+
+    function deleteGalleryPhoto(id) {
+      if (confirm('Delete this photo?')) {
+        fetch(`/api/gallery/${id}`, { method: 'DELETE' }).then(() => loadGallery());
+      }
+    }
+    
+    // --- ADMIN LIST ---
+    function loadAdmins() {
+      fetch('/api/admins')
+        .then(res => res.json())
+        .then(data => {
+          const tbody = document.getElementById('adminListTableBody');
+          tbody.innerHTML = '';
+          data.forEach(admin => {
+            const row = document.createElement('tr');
+            let lastLogin = 'Never';
+            if (admin.last_login) {
+              lastLogin = new Date(admin.last_login).toLocaleString('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              });
+            }
+            row.innerHTML = `
+              <td data-label="ID">${admin.id}</td>
+              <td data-label="Username">${admin.username}</td>
+              <td data-label="Last Login">${lastLogin}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        });
+    }
+
+    // --- NEW ADMIN USER ---
+    document.getElementById('adminUserForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const data = {
+        username: document.getElementById('newUsername').value,
+        password: document.getElementById('addAdminPassword').value
+      };
+      fetch('/api/admin-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(res => res.json())
+      .then(result => {
+        document.getElementById('adminUserStatus').innerText = result.message;
+        loadAdmins(); // Refresh the admin list
+        this.reset();
+      });
+    });
+    
+    // --- CHANGE PASSWORD ---
+    document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const oldPassword = document.getElementById('oldPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const statusP = document.getElementById('changePasswordStatus');
+
+      fetch('/api/admin-changepassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldPassword, newPassword })
+      })
+      .then(res => res.json())
+      .then(data => {
+        statusP.innerText = data.message;
+        if (data.success) {
+          statusP.style.color = 'green';
+          this.reset();
+        } else {
+          statusP.style.color = 'red';
+        }
+      });
+    });
+
+    // --- INITIALIZE PAGE ---
+    loadAppointments();
+    loadAboutContent();
+    loadNews();
+    loadGallery();
+    loadAdmins();
+  </script>
+</body>
+</html>
