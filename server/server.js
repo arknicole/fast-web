@@ -116,29 +116,6 @@ app.post('/api/admin-changepassword', async (req, res) => {
   }
 });
 
-// --- TEMPORARY: ONE-TIME ADMIN CREATION ROUTE ---
-// !!! REMOVE THIS ENTIRE ROUTE AFTER YOU USE IT ONCE !!!
-app.get('/api/setup-first-admin', async (req, res) => {
-  try {
-    // Define the first admin's credentials here
-    const defaultAdminUsername = 'ark';
-    const defaultAdminPassword = 'Stronger'; // IMPORTANT: Change this to a temporary password
-
-    // Check if the admin already exists
-    const [existing] = await db.execute('SELECT * FROM users WHERE username = ?', [defaultAdminUsername]);
-    if (existing.length > 0) {
-      return res.send('Admin user already exists. You can now remove this route from server.js');
-    }
-
-    // Hash the password and insert the new user
-    const hashedPassword = await bcrypt.hash(defaultAdminPassword, 10);
-    await db.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)', [defaultAdminUsername, hashedPassword]);
-    
-    res.send(`<h1>Admin User Created!</h1><p>Username: ${defaultAdminUsername}</p><p>You can now log in. PLEASE REMOVE THE /api/setup-first-admin ROUTE FROM SERVER.JS NOW.</p>`);
-  } catch (err) {
-    res.status(500).send('Error creating admin user: ' + err.message);
-  }
-});
 
 
 // ----------------- APPOINTMENTS MANAGEMENT -----------------
