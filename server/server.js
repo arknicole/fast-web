@@ -140,6 +140,11 @@ app.get('/api/setup-first-admin', async (req, res) => {
   }
 });
 
+// Health Check Endpoint for Railway
+app.get('/', (req, res) => {
+  res.send('FAST Aviation Server is healthy and running!');
+});
+
 
 // ----------------- APPOINTMENTS MANAGEMENT -----------------
 
