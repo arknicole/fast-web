@@ -9,7 +9,7 @@ const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -23,15 +23,15 @@ app.use(session({
 
 // Use a connection pool with promise support
 const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 }).promise();
-
 console.log('✅ MySQL Connection Pool created and ready for Railway.');
 
 // Multer setup
