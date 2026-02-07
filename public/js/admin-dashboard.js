@@ -1,9 +1,10 @@
 const token = localStorage.getItem("adminToken");
 if (!token) location.href = "admin-login.html";
 
-const API_BASE_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-  ? "http://localhost:3000"
-  : "https://your-app-name.onrender.com"; // Replace this after deploying to Render
+// Use dynamic base URL
+const API_BASE_URL = window.location.hostname === "localhost" 
+    ? "http://localhost:10000" 
+    : ""; // Relative path works when hosted on the same Render service
 
 function logout() {
   localStorage.removeItem("adminToken");
