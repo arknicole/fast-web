@@ -1,51 +1,93 @@
-// Appointment form submission
-document.getElementById('appointmentForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const form = this; // Reference to the form element
-  const data = {
-    fullname: document.getElementById('fullname').value,
-    email: document.getElementById('email').value,
-    contact: document.getElementById('contact').value,
-    program: document.getElementById('program').value,
-    appt_date: document.getElementById('appt_date').value,
-    appt_time: document.getElementById('appt_time').value
-  };
-
-  const dateObj = new Date(data.appt_date);
-  if (dateObj.getUTCDay() === 0) {
-    document.getElementById('formStatus').innerText = 'Appointments are only allowed Monday to Saturday.';
-    return;
+// ==========================================
+// 1. APPOINTMENT DATE HANDLING
+// ==========================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Set minimum date to today
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  const todayString = `${year}-${month}-${day}`;
+  
+  const dateInput = document.getElementById('appt_date');
+  if (dateInput) {
+    dateInput.setAttribute('min', todayString);
   }
-
-  fetch('/api/appointment', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  })
-  .then(res => res.json())
-  .then(result => {
-    if (result.message.includes('successfully')) {
-      // If submission is successful, show the pop-up modal
-      showAppointmentModal(data);
-      form.reset(); // Reset the form fields
-      document.getElementById('formStatus').innerText = ''; // Clear any previous error messages
-    } else {
-      // If there was an error (like a double booking), show the message
-      document.getElementById('formStatus').innerText = result.message;
-    }
-  })
-  .catch(() => {
-    document.getElementById('formStatus').innerText = 'Error submitting appointment.';
-  });
 });
 
-// New function to create and show the modal
+// ==========================================
+// 2. APPOINTMENT FORM SUBMISSION
+// ==========================================
+const apptForm = document.getElementById('appointmentForm');
+if (apptForm) {
+  apptForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this; 
+    
+    // Collect Data
+    const data = {
+      fullname: document.getElementById('fullname').value,
+      email: document.getElementById('email').value,
+      contact: document.getElementById('contact').value,
+      program: document.getElementById('program').value,
+      appt_date: document.getElementById('appt_date').value,
+      appt_time: document.getElementById('appt_time').value
+    };
+
+    // Validation: Contact Number (Numbers only)
+    const contactNumber = document.getElementById('contact').value.trim();
+    const contactRegex = /^[0-9]+$/;
+    if (!contactRegex.test(contactNumber)) {
+      document.getElementById('formStatus').innerText = 'Contact number must contain only numbers.';
+      return;
+    }
+    
+    // Validation: Past Dates
+    const selectedDate = new Date(data.appt_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    if (selectedDate < today) {
+      document.getElementById('formStatus').innerText = 'You cannot select a past date for an appointment.';
+      return;
+    }
+    
+    // Validation: Sundays
+    const dateObj = new Date(data.appt_date);
+    if (dateObj.getUTCDay() === 0) {
+      document.getElementById('formStatus').innerText = 'Appointments are only allowed Monday to Saturday.';
+      return;
+    }
+
+    // Submit to API
+    fetch('/api/appointment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+      if (result.message.includes('successfully')) {
+        showAppointmentModal(data);
+        form.reset(); 
+        document.getElementById('formStatus').innerText = ''; 
+      } else {
+        document.getElementById('formStatus').innerText = result.message;
+      }
+    })
+    .catch(() => {
+      document.getElementById('formStatus').innerText = 'Error submitting appointment.';
+    });
+  });
+}
+
+// ==========================================
+// 3. APPOINTMENT SUCCESS MODAL
+// ==========================================
 function showAppointmentModal(data) {
-  // Create the modal overlay
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
 
-  // Format the data for display
   const programName = data.program === 'AMT' ? 'Aircraft Maintenance Technology' : 'Aviation Electronics Technology';
   const formattedDate = new Date(data.appt_date).toLocaleDateString('en-US', {
     weekday: 'long',
@@ -54,112 +96,46 @@ function showAppointmentModal(data) {
     day: 'numeric'
   });
 
-  // Create the modal content
   overlay.innerHTML = `
     <div class="modal-content">
       <h2>Appointment Submitted!</h2>
       <p>Thank you, <strong>${data.fullname}</strong>. Your appointment request has been received. Please review the details below.</p>
       <hr>
       <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Contact No:</strong> ${data.contact}</p>
       <p><strong>Program:</strong> ${programName}</p>
       <p><strong>Preferred Date:</strong> ${formattedDate} (${data.appt_time})</p>
       <button class="modal-close-btn">Close</button>
     </div>
   `;
 
-  // Add the modal to the page
   document.body.appendChild(overlay);
-
-  // Show the modal
+  
+  // Small delay to allow CSS transition
   setTimeout(() => overlay.classList.add('is-visible'), 10);
 
-  // Add event listener to the close button
   overlay.querySelector('.modal-close-btn').addEventListener('click', () => {
     overlay.classList.remove('is-visible');
-    // Remove the modal from the DOM after the transition ends
     overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
   });
 }
 
-// Admin link hotkey
+// ==========================================
+// 4. ADMIN HOTKEY (Alt + A)
+// ==========================================
 document.addEventListener('keydown', function(e) {
   if (e.altKey && e.key.toLowerCase() === 'a') {
     const adminLink = document.querySelector('.admin-link');
     if (adminLink) {
-      adminLink.style.display = 'inline-block';
+      // Toggle visibility or just show it
+      adminLink.style.display = (adminLink.style.display === 'none') ? 'inline-block' : 'none';
     }
   }
 });
 
-/// Gallery slider loader
-function loadGallery() {
-  fetch('/api/gallery')
-    .then(res => res.json())
-    .then(data => {
-      const wrapper = document.getElementById('live-gallery-wrapper');
-      const swiperContainer = document.querySelector('.swiper');
-      if (!wrapper || !swiperContainer) return;
-      
-      wrapper.innerHTML = '';
-      
-      if (data.length <= 1) {
-        if (data.length === 1) {
-          const photo = data[0];
-          const slide = document.createElement('div');
-          slide.classList.add('swiper-slide');
-          // Create an img tag for the static image
-          slide.innerHTML = `<img src="${photo.path}" alt="${photo.caption || 'Gallery Photo'}">`;
-          if (photo.caption) {
-            slide.innerHTML += `<div class="gallery-caption-overlay is-visible"><p>${photo.caption}</p></div>`;
-          }
-          wrapper.appendChild(slide);
-        } else {
-          // Handle no photos
-          const defaultSlide = document.createElement('div');
-          defaultSlide.classList.add('swiper-slide');
-          defaultSlide.innerHTML = `<div class="gallery-caption-overlay is-visible"><h3>No photos yet</h3></div>`;
-          wrapper.appendChild(defaultSlide);
-        }
-        return; 
-      }
-
-      // This code runs for 2 or more photos
-      data.forEach(photo => {
-        const slide = document.createElement('div');
-        slide.classList.add('swiper-slide');
-        // Create an img tag and the caption overlay
-        slide.innerHTML = `<img src="${photo.path}" alt="${photo.caption || 'Gallery Photo'}">`;
-        if (photo.caption) {
-          slide.innerHTML += `<div class="gallery-caption-overlay"><p>${photo.caption}</p></div>`;
-        }
-        wrapper.appendChild(slide);
-      });
-
-      const swiper = new Swiper('.swiper', {
-        effect: 'slide',
-        grabCursor: true,
-        centeredSlides: true,
-        slidesPerView: 'auto',
-        loop: true,
-        autoplay: {
-          delay: 4000,
-          disableOnInteraction: false,
-        },
-        pagination: {
-          el: '.swiper-pagination',
-          clickable: true,
-        },
-        navigation: {
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
-        },
-      });
-    })
-    .catch(() => {
-      // Handle error
-    });
-}
-// Background animation elements
+// ==========================================
+// 5. BACKGROUND ANIMATION
+// ==========================================
 const layer = document.getElementById('animation-layer');
 if (layer) {
   function createMover(type, symbol) {
@@ -174,17 +150,14 @@ if (layer) {
     el.style.animation = `moveRandom ${10 + Math.random() * 20}s linear infinite alternate`;
     layer.appendChild(el);
   }
-
-  for (let i = 0; i < 10; i++) {
-    createMover('plane', '✈️');
-  }
-
-  for (let i = 0; i < 10; i++) {
-    createMover('gear', '⚙️');
-  }
+  // Create 10 planes and 10 gears
+  for (let i = 0; i < 10; i++) { createMover('plane', '✈️'); }
+  for (let i = 0; i < 10; i++) { createMover('gear', '⚙️'); }
 }
 
-// News/Announcements slider loader
+// ==========================================
+// 6. NEWS SLIDER LOADER
+// ==========================================
 function loadNews() {
   fetch('/api/news')
     .then(res => res.json())
@@ -195,15 +168,23 @@ function loadNews() {
 
       wrapper.innerHTML = '';
 
-      if (data.length === 0) {
+      // Strict filter to remove empty database rows
+      const filteredData = data.filter(item => {
+        const hasTitle = item.title && item.title.trim().length > 0;
+        const hasContent = item.content && item.content.trim().length > 0;
+        const hasImage = item.image && item.image.trim().length > 0;
+        return hasTitle || hasContent || hasImage;
+      });
+
+      if (filteredData.length === 0) {
         wrapper.innerHTML = '<div class="swiper-slide news-slide-item"><h3>No news at this time</h3></div>';
         return;
       }
-      
-      data.forEach(newsItem => {
+
+      // Render Slides
+      filteredData.forEach(newsItem => {
         const slide = document.createElement('div');
         slide.classList.add('swiper-slide', 'news-slide-item');
-        // Create an img tag above the title and content
         slide.innerHTML = `
           ${newsItem.image ? `<img src="${newsItem.image}" alt="${newsItem.title}" class="news-image">` : ''}
           <div class="news-text-content">
@@ -214,19 +195,25 @@ function loadNews() {
         wrapper.appendChild(slide);
       });
 
+      // Swiper Configuration
       const swiperOptions = {
+        effect: 'slide',
+        grabCursor: true,
+        centeredSlides: true, 
+        slidesPerView: 'auto', 
+        spaceBetween: 20, 
+        loop: true, 
+        // Autoplay removed for professional feel
+        // AutoHeight removed to allow CSS to force uniform sizing
+        observer: true, 
+        observeParents: true,
         pagination: {
           el: '.swiper-pagination-news',
           clickable: true,
         },
       };
 
-      if (data.length > 1) {
-        swiperOptions.loop = true;
-        swiperOptions.autoplay = {
-          delay: 5000,
-          disableOnInteraction: false,
-        };
+      if (filteredData.length > 1) {
         swiperOptions.navigation = {
           nextEl: '.swiper-button-next-news',
           prevEl: '.swiper-button-prev-news',
@@ -240,18 +227,57 @@ function loadNews() {
 
       const swiperNews = new Swiper('.swiper-news', swiperOptions);
     })
-    .catch(() => {
-      // Handle error
-    });
+    .catch(() => { });
 }
 
-// Dynamic "About" content loader
+// ==========================================
+// 7. ABOUT SECTION LOADER
+// ==========================================
 function loadAbout() {
   fetch('/api/about')
     .then(res => res.json())
     .then(data => {
       const container = document.getElementById('about-content-container');
-      if(container) container.innerHTML = data.content;
+      if (!container) return;
+
+      const courses = (data.courses_offered || '').replace(/\n/g, '<br>');
+      const fees = (data.fees_scholarships || '').replace(/\n/g, '<br>');
+      
+      // Use specific fields from the server API
+      const freshmenReq = (data.enrollment_requirements_freshmen || '').replace(/\n/g, '<br>');
+      const transfereesReq = (data.enrollment_requirements_transferees || '').replace(/\n/g, '<br>');
+      
+      const note = (data.application_note || '').replace(/\n/g, '<br>');
+
+      const aboutHTML = `
+        <div class="about-grid">
+          <div class="about-section">
+            <h3>Courses Offered</h3>
+            <div class="content">${courses}</div>
+          </div>
+          <div class="about-section">
+            <h3>Fees & Scholarships</h3>
+            <div class="content">${fees}</div>
+          </div>
+        </div>
+
+        <div class="requirements-section">
+          <h3>Enrollment Requirements</h3>
+          <div class="requirements-grid">
+            <div>
+              <h4>Freshmen</h4>
+              <div class="content">${freshmenReq}</div>
+            </div>
+            <div>
+              <h4>Transferees</h4>
+              <div class="content">${transfereesReq}</div>
+            </div>
+          </div>
+        </div>
+        ${data.application_note ? `<div class="application-note">${note}</div>` : ''}
+      `;
+
+      container.innerHTML = aboutHTML;
     })
     .catch(() => {
       const container = document.getElementById('about-content-container');
@@ -259,23 +285,65 @@ function loadAbout() {
     });
 }
 
-// Smooth Scrolling Navigation
+// ==========================================
+// 8. VIDEO PLAYER LOADER
+// ==========================================
+function loadVideo() {
+  fetch('/api/video')
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById('video-container');
+      if (!container) return;
+
+      // Add timestamp to prevent caching issues
+      const videoSrc = data.video_path ? `${data.video_path}?t=${new Date().getTime()}` : null;
+
+      if (videoSrc) {
+        // Force styling inline to ensure video expands correctly
+        container.innerHTML = `
+          <video controls autoplay muted loop playsinline 
+                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+            <source src="${videoSrc}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>`;
+      } else {
+        // Reset container style if empty so text is visible
+        container.style.paddingBottom = "0"; 
+        container.style.height = "auto";
+        container.style.padding = "50px";
+        container.innerHTML = '<div style="text-align: center;"><p>No video has been uploaded.</p></div>';
+      }
+    })
+    .catch(() => { });
+}
+
+// ==========================================
+// 9. SMOOTH SCROLLING (Universal Fix)
+// ==========================================
 document.addEventListener('DOMContentLoaded', function() {
-  const navLinks = document.querySelectorAll('nav a[href^="#"]');
+  // Select ALL links that start with # (Nav, Footer, Buttons)
+  const allLinks = document.querySelectorAll('a[href^="#"]');
   const navElement = document.querySelector('nav');
 
-  navLinks.forEach(link => {
+  allLinks.forEach(link => {
     link.addEventListener('click', function(e) {
-      e.preventDefault();
       const targetId = this.getAttribute('href');
+      
+      // Ignore empty links
+      if (targetId === '#' || !targetId) return;
+
       const targetSection = document.querySelector(targetId);
 
       if (targetSection) {
-        const navHeight = navElement ? navElement.offsetHeight : 0;
-        const targetPosition = targetSection.offsetTop - navHeight;
+        e.preventDefault();
         
+        // Calculate position: Section Top + Scroll - Header Height
+        const navHeight = navElement ? navElement.offsetHeight : 0;
+        const elementPosition = targetSection.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.scrollY - navHeight;
+
         window.scrollTo({
-          top: targetPosition,
+          top: offsetPosition,
           behavior: 'smooth'
         });
       }
@@ -283,7 +351,17 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// --- INITIALIZE PAGE CONTENT ---
-loadGallery();
+// ==========================================
+// 10. INITIALIZATION
+// ==========================================
 loadNews();
 loadAbout();
+loadVideo();
+
+// Workaround for Swiper ghost slide bug: Force an update after delay
+setTimeout(() => {
+    const swiperNewsElement = document.querySelector('.swiper-news');
+    if (swiperNewsElement && swiperNewsElement.swiper) {
+        swiperNewsElement.swiper.update();
+    }
+}, 1000);

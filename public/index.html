@@ -3,58 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FAST Aviation Academy, Inc., Bacolod City</title>
+  <title>FAST Aviation Academy, Inc. | Bacolod City</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div id="animation-layer"></div>
-  <header class="hero">
-    <img src="fast-new-logo-type-b.png" alt="FAST Aviation Academy Logo" />
-    <div>
-      <h1>FAST Aviation Academy | Bacolod City</h1>
-      
-    </div>
-  </header>
 
   <nav aria-label="Main navigation">
     <ul>
-      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#video">Watch Video</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#news">News</a></li>
       <li><a href="#appointment">Appointment</a></li>
       <li><a href="admin-login.html" class="admin-link" style="display: none;">Admin Login</a></li>
     </ul>
   </nav>
-
-  <section id="gallery">
-    <h2>FLY FAST</h2>
-
-    <div class="swiper">
-      <div class="swiper-wrapper" id="live-gallery-wrapper">
-        </div>
+  
+  <header class="hero">
+    <img src="fast-new-logo-type-b.png" alt="FAST Aviation Academy Logo" />
+    <div class="hero-content">
+      <h1>FAST Aviation Academy</h1>
+      <p>Bacolod City's Leading College of Aeronautics</p>
       
-      <div class="swiper-pagination"></div>
+      
+    </div>
+  </header>
 
-      <div class="swiper-button-prev"></div>
-      <div class="swiper-button-next"></div>
+  <section id="video">
+    <h2>🎥 Watch Our Story</h2>
+    <div id="video-container">
+      <p>Loading video...</p>
     </div>
   </section>
 
   <section id="about">
     <h2>About FAST Aviation Academy</h2>
     <div id="about-content-container">
-      <p>Loading...</p>
+      <p>Loading content...</p>
     </div>
-    <p>
-      Location: AVPefianco Building (beside countrymart), Highway Mandalagan, Lacson street, Bacolod City, Philippines
-    </p>
+    
+    <div style="text-align:center; margin-top:40px; color:#666; font-size:0.9rem;">
+      <p><i class="fas fa-map-marker-alt"></i> Location: AVPefianco Building (beside Countrymart), Highway Mandalagan, Lacson Street, Bacolod City, Philippines</p>
+    </div>
   </section>
 
   <section id="news">
@@ -62,6 +61,7 @@
     <div class="swiper-news">
       <div class="swiper-wrapper" id="news-container-wrapper">
         </div>
+      
       <div class="swiper-pagination-news"></div>
       <div class="swiper-button-prev-news"></div>
       <div class="swiper-button-next-news"></div>
@@ -71,47 +71,72 @@
   <section id="appointment">
     <h2>Online Appointment / Reservation</h2>
     <form id="appointmentForm">
-      <input type="text" id="fullname" name="fullname" placeholder="Full Name" required autocomplete="name" />
+      <div style="margin-bottom: 15px;">
+        <label for="fullname" style="display:block; margin-bottom:5px; font-weight:500;">Full Name</label>
+        <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required autocomplete="name" />
+      </div>
       
-      <input type="email" id="email" name="email" placeholder="Email" required autocomplete="email" />
+      <div style="margin-bottom: 15px;">
+        <label for="email" style="display:block; margin-bottom:5px; font-weight:500;">Email Address</label>
+        <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email" />
+      </div>
 
-      <input type="text" id="contact" name="contact" placeholder="Contact Number" required autocomplete="tel" />
+      <div style="margin-bottom: 15px;">
+        <label for="contact" style="display:block; margin-bottom:5px; font-weight:500;">Contact Number</label>
+        <input type="text" id="contact" name="contact" placeholder="Enter your mobile number" required autocomplete="tel" />
+      </div>
       
-      <select id="program" name="program" required>
-        <option value="AMT">Aircraft Maintenance Technology (AMT)</option>
-        <option value="AVT">Aviation Electronics Technology (AVT)</option>
-      </select>
-      <input type="date" id="appt_date" name="appt_date" required />
-      <select id="appt_time" name="appt_time" required>
-        <option value="AM">AM</option>
-        <option value="PM">PM</option>
-      </select>
+      <div style="margin-bottom: 15px;">
+        <label for="program" style="display:block; margin-bottom:5px; font-weight:500;">Interested Program</label>
+        <select id="program" name="program" required>
+          <option value="" disabled selected>Select a program...</option>
+          <option value="AMT">Aircraft Maintenance Technology (AMT)</option>
+          <option value="AVT">Aviation Electronics Technology (AVT)</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div>
+          <label for="appt_date" style="display:block; margin-bottom:5px; font-weight:500;">Preferred Date</label>
+          <input type="date" id="appt_date" name="appt_date" required />
+        </div>
+        <div>
+          <label for="appt_time" style="display:block; margin-bottom:5px; font-weight:500;">Time</label>
+          <select id="appt_time" name="appt_time" required>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+
       <button type="submit">Submit Appointment</button>
     </form>
-    <p id="formStatus"></p>
+    <p id="formStatus" style="text-align:center; margin-top:15px; color:var(--accent-orange); font-weight:bold;"></p>
   </section>
 
   <footer>
-  <div class="footer-container">
-    <div class="footer-contact">
-      <h3>Contact Us</h3>
-      <p><i class="fas fa-map-marker-alt"></i> AVPefianco Building, Mandalagan, Bacolod City</p>
-      <p><i class="fas fa-phone"></i> 034-707-0941 | 0917 321 8449 | 0998 546 8449</p>
-      <p><i class="fas fa-envelope"></i> fastacademy_bacolod@flyfast.com</p>
-    </div>
-    <div class="footer-social">
-      <h3>Follow Us</h3>
-      <a href="https://www.facebook.com/fastaviationacademy" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+    <div class="footer-container">
+      <div class="footer-contact">
+        <h3>Contact Us</h3>
+        <p><i class="fas fa-map-marker-alt" style="color:var(--accent-gold);"></i> AVPefianco Building, Mandalagan, Bacolod City</p>
+        <p><i class="fas fa-phone" style="color:var(--accent-gold);"></i> 034-707-0941 | 0917 321 8449</p>
+        <p><i class="fas fa-envelope" style="color:var(--accent-gold);"></i> fastacademy_bacolod@flyfast.com</p>
+      </div>
       
+      <div class="footer-social">
+        <h3>Follow Us</h3>
+        <a href="https://www.facebook.com/fastaviationacademy" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+      </div>
     </div>
-  </div>
-  <div class="footer-copyright">
-    <p>© 2025 FAST Aviation Academy, Inc., Bacolod City</p>
-  </div>
-</footer>
+    
+    <div class="footer-copyright">
+      <p>&copy; 2025 FAST Aviation Academy, Inc. All Rights Reserved.</p>
+    </div>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-
   <script src="script.js"></script>
 </body>
 </html>

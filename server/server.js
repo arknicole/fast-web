@@ -34,12 +34,20 @@ const db = mysql.createPool({
 }).promise();
 console.log('✅ MySQL Connection Pool created and ready for Railway.');
 
-// Multer setup
+// --- MULTER CONFIGURATION ---
+// 1. Standard Image Storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'public/uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 const upload = multer({ storage });
+
+// 2. Video Storage Configuration
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'public/uploads/'),
+  filename: (req, file, cb) => cb(null, 'site-video' + path.extname(file.originalname))
+});
+const uploadVideo = multer({ storage: videoStorage });
 
 
 // ----------------- ADMIN AUTH & USER MANAGEMENT -----------------
@@ -116,9 +124,7 @@ app.post('/api/admin-changepassword', async (req, res) => {
   }
 });
 
-
-
-// Health Check Endpoint for Railway
+// Health Check
 app.get('/', (req, res) => {
   res.send('FAST Aviation Server is healthy and running!');
 });
@@ -216,52 +222,70 @@ app.delete('/api/news/:id', async (req, res) => {
 });
 
 
-// ----------------- GALLERY MANAGEMENT -----------------
 
-app.post('/api/gallery-upload', upload.array('photos', 10), (req, res) => {
-  if (!req.session.loggedIn) return res.status(401).json({ message: 'Unauthorized' });
-  if (!req.files || req.files.length === 0) return res.status(400).json({ message: 'No files uploaded.' });
-  
-  const caption = req.body.caption || '';
-  const sql = 'INSERT INTO gallery (path, caption) VALUES (?, ?)';
-  
-  const insertPromises = req.files.map(file => {
-    const filepath = `/uploads/${file.filename}`;
-    return db.execute(sql, [filepath, caption]);
-  });
-  
-  Promise.all(insertPromises)
-    .then(() => res.json({ message: 'Photos uploaded successfully!' }))
-    .catch(err => res.status(500).json({ message: 'Database error during upload.' }));
-});
 
-app.get('/api/gallery', async (req, res) => {
+
+// ----------------- VIDEO CONTENT MANAGEMENT -----------------
+
+app.get('/api/video', async (req, res) => {
   try {
-    const [results] = await db.query('SELECT * FROM gallery ORDER BY uploaded_at DESC');
-    res.json(results);
+    const [results] = await db.query('SELECT video_path FROM video_content WHERE id = 1');
+    if (results.length === 0) {
+      return res.json({ video_path: '' });
+    }
+    res.json(results[0]);
   } catch (err) {
-    res.json([]);
+    res.json({ video_path: '' });
   }
 });
-
-app.delete('/api/gallery/:id', async (req, res) => {
+// Update endpoint: Accepts ONLY a file upload
+app.put('/api/video', uploadVideo.single('video'), async (req, res) => {
   if (!req.session.loggedIn) return res.status(401).json({ message: 'Unauthorized' });
+  
+  // Strictly check for a file
+  if (!req.file) {
+    return res.json({ success: false, message: 'No video file was uploaded.' });
+  }
+  
   try {
-    await db.execute('DELETE FROM gallery WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Photo deleted' });
+    const videoPath = `/uploads/${req.file.filename}`;
+    
+    await db.execute(
+      'UPDATE video_content SET video_path = ? WHERE id = 1',
+      [videoPath]
+    );
+    res.json({ success: true, message: 'Video uploaded successfully!' });
   } catch (err) {
-    res.json({ message: 'Error deleting photo' });
+    console.error(err);
+    res.json({ success: false, message: 'Failed to update video.' });
   }
 });
-
-
 // ----------------- ABOUT CONTENT MANAGEMENT -----------------
 
 app.get('/api/about', async (req, res) => {
   try {
-    const [results] = await db.query('SELECT content FROM about_content WHERE id = 1');
-    if (results.length === 0) return res.json({ content: 'Content not found.' });
-    res.json(results[0]);
+    const [results] = await db.query('SELECT courses_offered, fees_scholarships, requirements, application_note FROM about_content WHERE id = 1');
+    if (results.length === 0) {
+      return res.json({ 
+        courses_offered: '',
+        fees_scholarships: '',
+        enrollment_requirements_freshmen: '',
+        enrollment_requirements_transferees: '',
+        application_note: ''
+      });
+    }
+    
+    const requirementsContent = results[0].requirements || '';
+    const freshmenMatch = requirementsContent.match(/<h3>For Incoming Freshmen<\/h3>(.*?)<h3>For Transferees<\/h3>/s);
+    const transfereesMatch = requirementsContent.match(/<h3>For Transferees<\/h3>(.*)/s);
+    
+    res.json({
+        courses_offered: results[0].courses_offered,
+        fees_scholarships: results[0].fees_scholarships,
+        enrollment_requirements_freshmen: freshmenMatch ? freshmenMatch[1].trim() : '',
+        enrollment_requirements_transferees: transfereesMatch ? transfereesMatch[1].trim().replace(/<\/?div.*?>/g, '') : '',
+        application_note: results[0].application_note
+    });
   } catch (err) {
     res.json({ content: 'Error loading content.' });
   }
@@ -270,14 +294,24 @@ app.get('/api/about', async (req, res) => {
 app.put('/api/about', async (req, res) => {
   if (!req.session.loggedIn) return res.status(401).json({ message: 'Unauthorized' });
   try {
-    const { content } = req.body;
-    await db.execute('UPDATE about_content SET content = ? WHERE id = 1', [content]);
+    const { coursesOffered, feesScholarships, enrollmentRequirementsFreshmen, enrollmentRequirementsTransferees, applicationNote } = req.body;
+    
+    const combinedRequirements = `
+      <h3>For Incoming Freshmen</h3>${enrollmentRequirementsFreshmen}
+      <h3>For Transferees</h3>${enrollmentRequirementsTransferees}
+    `.trim();
+
+    await db.execute(
+      'UPDATE about_content SET courses_offered = ?, fees_scholarships = ?, requirements = ?, application_note = ? WHERE id = 1',
+      [coursesOffered, feesScholarships, combinedRequirements, applicationNote]
+    );
+
     res.json({ success: true, message: 'About content updated successfully!' });
   } catch (err) {
-    res.json({ success: false, message: 'Failed to update content.' });
+    console.error("PUT /api/about Database Error:", err);
+    res.json({ success: false, message: 'Failed to update content. (Database error)' });
   }
 });
-
 
 // ----------------- SERVER -----------------
 app.listen(PORT, () => {

@@ -32,15 +32,29 @@
     </table>
   </section>
 
-  <section>
-    <h2>📝 Manage "About" Section</h2>
-    <form id="aboutForm">
-      <textarea id="aboutContent" rows="15" style="width: 98%; font-family: monospace;" required></textarea>
-      <br>
-      <button type="submit">Save About Content</button>
-    </form>
-    <p id="aboutStatus"></p>
-  </section>
+ <section>
+  <h2>📝 Manage "About" Section</h2>
+  <form id="aboutForm">
+    <label for="coursesOffered">Courses Offered :</label>
+    <textarea id="coursesOffered" name="coursesOffered" rows="5" placeholder="Enter HTML for the courses section"></textarea>
+
+    <label for="feesScholarships">Fees & Scholarships :</label>
+    <textarea id="feesScholarships" name="feesScholarships" rows="10" placeholder="Enter HTML for the fees and scholarships"></textarea>
+
+    <label for="enrollmentRequirementsFreshmen">Requirements (Freshmen):</label>
+    <textarea id="enrollmentRequirementsFreshmen" name="enrollmentRequirementsFreshmen" rows="5" placeholder="Enter HTML for the freshmen requirements"></textarea>
+
+    <label for="enrollmentRequirementsTransferees">Requirements (Transferees):</label>
+    <textarea id="enrollmentRequirementsTransferees" name="enrollmentRequirementsTransferees" rows="5" placeholder="Enter HTML for the transferees requirements"></textarea>
+
+    <label for="applicationNote">Application Note :</label>
+    <textarea id="applicationNote" name="applicationNote" rows="3" placeholder="Enter HTML for the application note"></textarea>
+
+    <br>
+    <button type="submit">Save About Content</button>
+  </form>
+  <p id="aboutStatus"></p>
+</section>
 
   <section>
     <h2>📰 Manage News / Announcements</h2>
@@ -53,15 +67,21 @@
     <div id="newsList"></div>
   </section>
 
+  
+
   <section>
-    <h2>📸 Manage Gallery</h2>
-    <form id="photoUploadForm" enctype="multipart/form-data">
-      <input type="file" name="photos" accept="image/*" required multiple />
-      <input type="text" name="caption" id="photoCaption" placeholder="Photo caption for all photos (optional)" />
-      <button type="submit">Upload Photos</button>
+    <h2>🎬 Manage Website Video</h2>
+    <form id="videoForm" enctype="multipart/form-data">
+      <label for="videoFile">Upload Video File (MP4/WebM):</label>
+      <input type="file" id="videoFile" name="video" accept="video/mp4,video/webm" required />
+      
+      <br><br>
+      <p style="font-size: 0.9em; opacity: 0.8;">
+        <strong>Current Video:</strong> <span id="currentVideoPath" style="word-break: break-all;">Loading...</span>
+      </p>
+      <button type="submit">Upload Video</button>
     </form>
-    <p id="photoUploadStatus"></p>
-    <div id="admin-gallery"></div>
+    <p id="videoStatus"></p>
   </section>
 
   <section>
@@ -81,8 +101,10 @@
   <section>
     <h2>👤 Add New Admin User</h2>
     <form id="adminUserForm">
-      <input type="text" id="newUsername" name="username" placeholder="New Admin Username" required />
-      <input type="password" id="addAdminPassword" name="password" placeholder="New Admin Password" required />
+      <input type="text" id="newUsername" name="username" placeholder="New Admin Username" required autocomplete="username" />
+      
+      <input type="password" id="addAdminPassword" name="password" placeholder="New Admin Password" required autocomplete="new-password" />
+      
       <button type="submit">Create Admin</button>
     </form>
     <p id="adminUserStatus"></p>
@@ -170,25 +192,84 @@
     }
     
     // --- ABOUT SECTION ---
-    function loadAboutContent() {
-      fetch('/api/about')
+   function loadAboutContent() {
+  fetch('/api/about')
+    .then(res => res.json())
+    .then(data => {
+      // Check if data is structured before trying to fill the fields
+      if (data.courses_offered) {
+        document.getElementById('coursesOffered').value = data.courses_offered; // <-- If this ID is missing in HTML, the error occurs.
+        document.getElementById('feesScholarships').value = data.fees_scholarships;
+        document.getElementById('enrollmentRequirementsFreshmen').value = data.enrollment_requirements_freshmen;
+        document.getElementById('enrollmentRequirementsTransferees').value = data.enrollment_requirements_transferees;
+        document.getElementById('applicationNote').value = data.application_note;
+      }
+    });
+}
+
+document.getElementById('aboutForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const data = {
+    coursesOffered: document.getElementById('coursesOffered').value,
+    feesScholarships: document.getElementById('feesScholarships').value,
+    enrollmentRequirementsFreshmen: document.getElementById('enrollmentRequirementsFreshmen').value,
+    enrollmentRequirementsTransferees: document.getElementById('enrollmentRequirementsTransferees').value,
+    applicationNote: document.getElementById('applicationNote').value
+  };
+  
+  fetch('/api/about', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(result => {
+    document.getElementById('aboutStatus').innerText = result.message;
+  });
+});
+
+// --- VIDEO ---
+    function loadVideoContent() {
+      fetch('/api/video')
         .then(res => res.json())
         .then(data => {
-          document.getElementById('aboutContent').value = data.content;
-        });
+          // We update the span text, NOT the input value, because it might be a file path
+          const displayPath = data.video_path || 'None set';
+          const pathSpan = document.getElementById('currentVideoPath');
+          if (pathSpan) {
+             pathSpan.innerText = displayPath;
+          }
+        })
+        .catch(err => console.error(err));
     }
 
-    document.getElementById('aboutForm').addEventListener('submit', function(e) {
+    document.getElementById('videoForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const content = document.getElementById('aboutContent').value;
-      fetch('/api/about', {
+      const statusP = document.getElementById('videoStatus');
+      const videoFile = document.getElementById('videoFile').files[0];
+      
+      if (!videoFile) {
+        statusP.innerText = 'Please select a file.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      
+      statusP.innerText = 'Uploading video... please wait.';
+
+      fetch('/api/video', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        body: formData
       })
       .then(res => res.json())
       .then(result => {
-        document.getElementById('aboutStatus').innerText = result.message;
+        statusP.innerText = result.message;
+        loadVideoContent(); 
+        document.getElementById('videoForm').reset();
+      })
+      .catch(err => {
+        statusP.innerText = 'An error occurred during upload.';
       });
     });
 
@@ -232,46 +313,7 @@
       }
     }
 
-    // --- GALLERY ---
-    document.getElementById('photoUploadForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const formData = new FormData(this);
-      fetch('/api/gallery-upload', {
-        method: 'POST',
-        body: formData
-      })
-      .then(res => res.json())
-      .then(result => {
-        document.getElementById('photoUploadStatus').innerText = result.message;
-        loadGallery();
-        this.reset();
-      });
-    });
-
-    function loadGallery() {
-      fetch('/api/gallery')
-        .then(res => res.json())
-        .then(data => {
-          const container = document.getElementById('admin-gallery');
-          container.innerHTML = '';
-          data.forEach(photo => {
-            const div = document.createElement('div');
-            div.style = 'display: inline-block; margin: 10px; text-align: center;';
-            div.innerHTML = `
-              <img src="${photo.path}" alt="Gallery photo" style="max-width:200px; display: block;">
-              <p>${photo.caption || 'No caption'}</p>
-              <button onclick="deleteGalleryPhoto(${photo.id})">Delete</button>
-            `;
-            container.appendChild(div);
-          });
-        });
-    }
-
-    function deleteGalleryPhoto(id) {
-      if (confirm('Delete this photo?')) {
-        fetch(`/api/gallery/${id}`, { method: 'DELETE' }).then(() => loadGallery());
-      }
-    }
+    
     
     // --- ADMIN LIST ---
     function loadAdmins() {
@@ -343,12 +385,14 @@
       });
     });
 
+    
+
     // --- INITIALIZE PAGE ---
     loadAppointments();
     loadAboutContent();
     loadNews();
-    loadGallery();
     loadAdmins();
+    loadVideoContent();
   </script>
 </body>
 </html>
