@@ -99,6 +99,8 @@ app.post('/api/appointment', async (req, res) => {
   res.json({ message: 'Success' });
 });
 
+
+
 app.get('/', (req, res) => res.send('FAST Aviation Server Live!'));
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
